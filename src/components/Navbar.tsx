@@ -64,25 +64,25 @@ const Navbar = () => {
         className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ${
           scrolled
             ? "glass shadow-elevated"
-            : "bg-transparent border-b border-transparent"
+          : "bg-white/40 border-b border-transparent  "
         }`}
       >
-        <div className="container flex items-center justify-between h-16">
+        <div className="container flex items-center justify-between h-20">
           {/* Logo */}
           <Link to="/">
             <motion.div
-              className="flex items-center gap-2"
+              className=" flex  items-center gap-2"
               whileHover={{ scale: 1.05 }}
               transition={{ type: "spring", stiffness: 300 }}
             >
               <motion.img
                 src={logo}
                 alt="UniSpeak AI logo"
-                className="w-9 h-9 object-contain"
+                className="w-28 h-auto object-contain"
                 animate={{ rotate: scrolled ? 0 : [0, -5, 5, 0] }}
                 transition={{ duration: 2, repeat: Infinity, repeatDelay: 4 }}
               />
-              <span className="text-lg font-bold text-foreground">UniSpeak AI</span>
+              <span className="text-lg font-bold text-foreground text-white">UniSpeak AI</span>
             </motion.div>
           </Link>
 
