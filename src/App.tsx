@@ -13,6 +13,7 @@ import Analytics from "./pages/admin/Analytics";
 import Settings from "./pages/admin/Settings";
 import ResetPassword from "./pages/ResetPassword";
 import ProtectedRoute from "./components/ProtectedRoute";
+import VoiceAssistantWidget from "./components/VoiceAssistantWidget";
 
 const queryClient = new QueryClient();
 
