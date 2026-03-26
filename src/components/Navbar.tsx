@@ -1,15 +1,19 @@
-import { Globe } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { motion } from "framer-motion";
+import logo from "@/assets/unispeak-logo.png";
 
 const Navbar = () => {
   return (
-    <nav className="fixed top-0 left-0 right-0 z-50 glass">
+    <motion.nav
+      initial={{ y: -80, opacity: 0 }}
+      animate={{ y: 0, opacity: 1 }}
+      transition={{ duration: 0.6, ease: "easeOut" }}
+      className="fixed top-0 left-0 right-0 z-50 glass"
+    >
       <div className="container flex items-center justify-between h-16">
-        <div className="flex items-center gap-3">
-          <div className="w-9 h-9 rounded-lg bg-royal/20 flex items-center justify-center">
-            <Globe className="w-5 h-5 text-royal" />
-          </div>
-          <span className="text-lg font-bold text-foreground">MIE</span>
+        <div className="flex items-center gap-2">
+          <img src={logo} alt="UniSpeak AI logo" className="w-9 h-9 object-contain" />
+          <span className="text-lg font-bold text-foreground">UniSpeak AI</span>
         </div>
 
         <div className="hidden md:flex items-center gap-8 text-sm font-medium text-muted-foreground">
@@ -20,7 +24,7 @@ const Navbar = () => {
 
         <Button variant="hero" size="sm">Get Started</Button>
       </div>
-    </nav>
+    </motion.nav>
   );
 };
 

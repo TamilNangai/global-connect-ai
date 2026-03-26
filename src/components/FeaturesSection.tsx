@@ -3,6 +3,7 @@ import {
   UserCheck, RefreshCw, BarChart3, Layers,
   Heart, Puzzle
 } from "lucide-react";
+import { motion } from "framer-motion";
 
 const features = [
   {
@@ -57,13 +58,31 @@ const features = [
   },
 ];
 
+const containerVariants = {
+  hidden: {},
+  visible: {
+    transition: { staggerChildren: 0.08 }
+  }
+};
+
+const itemVariants = {
+  hidden: { opacity: 0, y: 30 },
+  visible: { opacity: 1, y: 0, transition: { duration: 0.5, ease: "easeOut" } }
+};
+
 const FeaturesSection = () => {
   return (
     <section className="py-24 bg-background relative">
       <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-royal/30 to-transparent" />
       
       <div className="container">
-        <div className="text-center max-w-2xl mx-auto mb-16">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, margin: "-100px" }}
+          transition={{ duration: 0.5 }}
+          className="text-center max-w-2xl mx-auto mb-16"
+        >
           <span className="text-sm font-semibold tracking-wider uppercase text-royal">Core Capabilities</span>
           <h2 className="text-4xl md:text-5xl font-bold mt-3 mb-5 text-foreground">
             Beyond Simple Translation
@@ -71,23 +90,30 @@ const FeaturesSection = () => {
           <p className="text-muted-foreground text-lg">
             A complete multilingual communication platform with intelligence, memory, and adaptability built in.
           </p>
-        </div>
+        </motion.div>
 
-        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-6xl mx-auto">
-          {features.map((feature, i) => (
-            <div
+        <motion.div
+          variants={containerVariants}
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true, margin: "-50px" }}
+          className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-6xl mx-auto"
+        >
+          {features.map((feature) => (
+            <motion.div
               key={feature.title}
-              className="group relative p-6 rounded-xl bg-card-gradient shadow-card border border-border/50 hover:shadow-elevated hover:-translate-y-1 transition-all duration-300"
-              style={{ animationDelay: `${i * 0.05}s` }}
+              variants={itemVariants}
+              whileHover={{ y: -6, scale: 1.02 }}
+              className="group relative p-6 rounded-xl bg-card-gradient shadow-card border border-border/50 hover:shadow-elevated transition-shadow duration-300"
             >
-              <div className="w-12 h-12 rounded-lg bg-royal/10 flex items-center justify-center mb-4 group-hover:bg-royal/20 transition-colors">
+              <div className="w-12 h-12 rounded-lg bg-royal/10 flex items-center justify-center mb-4 group-hover:bg-royal/20 group-hover:scale-110 transition-all duration-300">
                 <feature.icon className="w-6 h-6 text-royal" />
               </div>
               <h3 className="text-lg font-semibold text-foreground mb-2">{feature.title}</h3>
               <p className="text-muted-foreground text-sm leading-relaxed">{feature.description}</p>
-            </div>
+            </motion.div>
           ))}
-        </div>
+        </motion.div>
       </div>
     </section>
   );
