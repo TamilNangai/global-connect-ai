@@ -2,8 +2,10 @@ import { Button } from "@/components/ui/button";
 import { Zap, Brain, Globe, ArrowRight } from "lucide-react";
 import { motion } from "framer-motion";
 import heroImg from "@/assets/hero-immersive.jpg";
+import { useNavigate } from "react-router-dom";
 
 const HeroSection = () => {
+  const navigate = useNavigate();
   return (
     <section className="relative min-h-screen flex items-center overflow-hidden">
       {/* Full-screen background image */}
@@ -81,7 +83,7 @@ const HeroSection = () => {
             transition={{ duration: 0.5, delay: 0.35 }}
             className="flex flex-col sm:flex-row gap-4 mb-16"
           >
-            <Button variant="hero" size="lg" className="text-base px-8 py-6 group">
+            <Button variant="hero" size="lg" className="text-base px-8 py-6 group" onClick={() => navigate('/unispeak')}>
               <Zap className="mr-2 h-5 w-5" />
               Get Started Free
               <ArrowRight className="ml-2 h-4 w-4 group-hover:translate-x-1 transition-transform" />

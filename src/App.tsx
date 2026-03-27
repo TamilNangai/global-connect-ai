@@ -14,6 +14,7 @@ import Settings from "./pages/admin/Settings";
 import ResetPassword from "./pages/ResetPassword";
 import ProtectedRoute from "./components/ProtectedRoute";
 import VoiceAssistantWidget from "./components/VoiceAssistantWidget";
+import LanguageDetection from "./pages/LanguageDetection";
 
 const queryClient = new QueryClient();
 
@@ -26,6 +27,7 @@ const App = () => (
         <AuthProvider>
           <Routes>
             <Route path="/" element={<Index />} />
+            <Route path="/unispeak" element={<LanguageDetection />} />
             <Route path="/login" element={<Login />} />
             <Route path="/reset-password" element={<ResetPassword />} />
             <Route
