@@ -8,40 +8,8 @@ import {
   AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip,
   ResponsiveContainer, BarChart, Bar,
 } from "recharts";
-
-const stats = [
-  { label: "Total Users", value: "12,847", change: "+12.5%", icon: Users, color: "text-royal" },
-  { label: "Active Sessions", value: "1,284", change: "+8.3%", icon: Activity, color: "text-azure" },
-  { label: "Languages Used", value: "42", change: "+3", icon: Globe, color: "text-royal" },
-  { label: "Avg Response", value: "87ms", change: "-14ms", icon: Clock, color: "text-azure" },
-];
-
-const activityData = [
-  { name: "Mon", requests: 4200, users: 850 },
-  { name: "Tue", requests: 5100, users: 920 },
-  { name: "Wed", requests: 4800, users: 880 },
-  { name: "Thu", requests: 6300, users: 1100 },
-  { name: "Fri", requests: 5900, users: 1050 },
-  { name: "Sat", requests: 3200, users: 620 },
-  { name: "Sun", requests: 2900, users: 550 },
-];
-
-const languageData = [
-  { lang: "English", count: 4200 },
-  { lang: "Spanish", count: 2800 },
-  { lang: "French", count: 1900 },
-  { lang: "Chinese", count: 1600 },
-  { lang: "Arabic", count: 1200 },
-  { lang: "Hindi", count: 980 },
-];
-
-const recentConversations = [
-  { user: "John D.", lang: "EN → ES", sentiment: "Positive", time: "2m ago" },
-  { user: "Aisha K.", lang: "AR → EN", sentiment: "Neutral", time: "5m ago" },
-  { user: "Li Wei", lang: "ZH → FR", sentiment: "Positive", time: "8m ago" },
-  { user: "Maria S.", lang: "ES → EN", sentiment: "Neutral", time: "12m ago" },
-  { user: "Raj P.", lang: "HI → EN", sentiment: "Positive", time: "15m ago" },
-];
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 
 const containerVariants = {
   hidden: {},
@@ -54,6 +22,87 @@ const itemVariants = {
 };
 
 const Dashboard = () => {
+  // Fetch real stats
+  const { data: totalUsers } = useQuery({
+    queryKey: ["totalUsers"],
+    queryFn: async () => {
+      const { count } = await supabase.from("profiles").select("*", { count: "exact", head: true });
+      return count || 0;
+    },
+  });
+
+  const { data: activeSessions } = useQuery({
+    queryKey: ["activeSessions"],
+    queryFn: async () => {
+      const { count } = await supabase.from("conversations").select("*", { count: "exact", head: true }).is("ended_at", null);
+      return count || 0;
+    },
+  });
+
+  const { data: languagesUsed } = useQuery({
+    queryKey: ["languagesUsed"],
+    queryFn: async () => {
+      const { data } = await supabase.from("messages").select("language");
+      const unique = new Set(data?.map(m => m.language).filter(Boolean));
+      return unique.size;
+    },
+  });
+
+  const { data: avgResponse } = useQuery({
+    queryKey: ["avgResponse"],
+    queryFn: async () => {
+      const { data } = await supabase.from("assistant_analytics").select("duration_seconds");
+      if (!data || data.length === 0) return 0;
+      const avg = data.reduce((sum, a) => sum + (a.duration_seconds || 0), 0) / data.length;
+      return Math.round(avg * 1000); // to ms
+    },
+  });
+
+  const { data: languageData } = useQuery({
+    queryKey: ["languageData"],
+    queryFn: async () => {
+      const { data } = await supabase.from("messages").select("language");
+      const counts: Record<string, number> = {};
+      data?.forEach(m => {
+        if (m.language) counts[m.language] = (counts[m.language] || 0) + 1;
+      });
+      return Object.entries(counts).slice(0, 6).map(([lang, count]) => ({ lang, count }));
+    },
+  });
+
+  const { data: recentConversations } = useQuery({
+    queryKey: ["recentConversations"],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("conversations")
+        .select(`
+          id,
+          language,
+          sentiment,
+          created_at,
+          profiles(display_name)
+        `)
+        .order("created_at", { ascending: false })
+        .limit(5);
+      return data?.map(c => ({
+        user: (c.profiles as any)?.display_name || "Anonymous",
+        lang: `${c.language?.toUpperCase() || "EN"} → EN`,
+        sentiment: c.sentiment || "Neutral",
+        time: new Date(c.created_at).toLocaleString(),
+      })) || [];
+    },
+  });
+
+  // Mock activity data for now
+  const activityData = [
+    { name: "Mon", requests: 4200, users: 850 },
+    { name: "Tue", requests: 5100, users: 920 },
+    { name: "Wed", requests: 4800, users: 880 },
+    { name: "Thu", requests: 6300, users: 1100 },
+    { name: "Fri", requests: 5900, users: 1050 },
+    { name: "Sat", requests: 3200, users: 620 },
+    { name: "Sun", requests: 2900, users: 550 },
+  ];
   return (
     <motion.div
       variants={containerVariants}
