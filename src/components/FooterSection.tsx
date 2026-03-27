@@ -3,7 +3,7 @@ import logo from "@/assets/unispeak-logo.png";
 
 const FooterSection = () => {
   return (
-    <footer className="bg-hero py-16 border-t border-royal/10">
+    <footer className="bg-hero py-16 border-t border-royal/10 font-normal">
       <div className="container">
         <div className="max-w-6xl mx-auto">
           <motion.div
@@ -11,8 +11,8 @@ const FooterSection = () => {
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             transition={{ duration: 0.5 }}
-            className="flex flex-col md:flex-row justify-between items-center gap-8"
-          >
+            className="flex flex-col md:flex-row justify-between items-center gap-8">
+            
             <div className="flex items-center gap-3">
               <img src={logo} alt="UniSpeak AI logo" className="w-10 h-10 object-contain" loading="lazy" width={512} height={512} />
               <span className="text-xl font-bold text-primary-foreground">UniSpeak AI</span>
@@ -31,8 +31,8 @@ const FooterSection = () => {
           </div>
         </div>
       </div>
-    </footer>
-  );
+    </footer>);
+
 };
 
 export default FooterSection;

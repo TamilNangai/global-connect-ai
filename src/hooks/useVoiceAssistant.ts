@@ -38,13 +38,14 @@ function detectSentiment(text: string): string {
 // FastText-based language detection via server (with fallback to regex)
 async function detectLanguageServer(text: string): Promise<{ language: string; confidence: number }> {
   try {
+    const { data: { session } } = await supabase.auth.getSession();
     const response = await fetch(
       `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/lang-detect`,
       {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+          ...(session?.access_token ? { Authorization: `Bearer ${session.access_token}` } : {})
         },
         body: JSON.stringify({ text: text.trim() }),
       }
@@ -310,13 +311,14 @@ export function useVoiceAssistant(options: UseVoiceAssistantOptions = {}) {
     abortRef.current = controller;
 
     try {
+      const { data: { session } } = await supabase.auth.getSession();
       const resp = await fetch(
         `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/voice-chat`,
         {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
-            Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+            ...(session?.access_token ? { Authorization: `Bearer ${session.access_token}` } : {})
           },
           body: JSON.stringify({
             messages: allMessages.slice(-20), // Last 20 messages for context
@@ -513,43 +515,80 @@ export function useVoiceAssistant(options: UseVoiceAssistantOptions = {}) {
 
 
   // Process recorded audio with Whisper
-  const processAudioBlob = useCallback(async (audioBlob: Blob) => {
-    try {
-      const formData = new FormData();
-      formData.append('audio', audioBlob, 'recording.webm');
+  const processAudioBlob = async (audioBlob: Blob) => {
+  try {
+    const formData = new FormData();
+    formData.append("audio", audioBlob, "recording.webm");
 
-      const response = await fetch(
-        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/whisper-stt`,
-        {
-          method: 'POST',
-          headers: {
-            Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
-          },
-          body: formData,
-        }
-      );
+    // Supabase v2: get current session
+    const { data: { session } } = await supabase.auth.getSession();
+    const accessToken = session?.access_token;
 
-      if (!response.ok) {
-        const errData = await response.json().catch(() => ({}));
-        throw new Error(errData.error || 'STT failed');
+    if (!accessToken) throw new Error("User not authenticated");
+
+    const response = await fetch(
+      `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/whisper-stt`,
+      {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        },
+        body: formData,
       }
+    );
 
-      const { text, language } = await response.json();
-      if (text && text.trim()) {
-        setCurrentTranscript(text);
-        const convId = await ensureConversation();
-        if (convId) {
-          await handleUserSpeech(text.trim(), convId);
-
-        }
-      }
-    } catch (err: any) {
-      console.error('Whisper processing error:', err);
-      setError('Speech-to-text failed');
-    } finally {
-      setCurrentTranscript('');
+    if (!response.ok) {
+      const errData = await response.json().catch(() => ({}));
+      throw new Error(errData.error || "STT failed");
     }
-  }, [ensureConversation, getAIResponse]);
+
+    const { text, language } = await response.json();
+    return text;
+  } catch (err: any) {
+    console.error("Whisper processing error:", err);
+    return "";
+  }
+};
+
+
+
+  // const processAudioBlob = useCallback(async (audioBlob: Blob) => {
+  //   try {
+  //     const formData = new FormData();
+  //     formData.append('audio', audioBlob, 'recording.webm');
+
+  //     const response = await fetch(
+  //       `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/whisper-stt`,
+  //       {
+  //         method: 'POST',
+  //         headers: {
+  //           Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+  //         },
+  //         body: formData,
+  //       }
+  //     );
+
+  //     if (!response.ok) {
+  //       const errData = await response.json().catch(() => ({}));
+  //       throw new Error(errData.error || 'STT failed');
+  //     }
+
+  //     const { text, language } = await response.json();
+  //     if (text && text.trim()) {
+  //       setCurrentTranscript(text);
+  //       const convId = await ensureConversation();
+  //       if (convId) {
+  //         await handleUserSpeech(text.trim(), convId);
+
+  //       }
+  //     }
+  //   } catch (err: any) {
+  //     console.error('Whisper processing error:', err);
+  //     setError('Speech-to-text failed');
+  //   } finally {
+  //     setCurrentTranscript('');
+  //   }
+  // }, [ensureConversation, getAIResponse]);
 
   // Connect (start hands-free conversation)
   const connect = useCallback(async () => {

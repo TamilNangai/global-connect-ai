@@ -1,4 +1,7 @@
+// @ts-ignore
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+
+declare var Deno: any;
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -57,7 +60,7 @@ async function detectLanguageFastText(text: string): Promise<{ language: string;
     return null;
   }
 }
-serve(async (req) => {
+serve(async (req: Request) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
