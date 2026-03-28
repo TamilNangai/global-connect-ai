@@ -35,31 +35,22 @@ function detectSentiment(text: string): string {
   return "neutral";
 }
 
-// FastText-based language detection via server (with fallback to regex)
 async function detectLanguageServer(text: string): Promise<{ language: string; confidence: number }> {
   try {
-    const { data: { session } } = await supabase.auth.getSession();
-    const response = await fetch(
-      `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/lang-detect`,
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          ...(session?.access_token ? { Authorization: `Bearer ${session.access_token}` } : {})
-        },
-        body: JSON.stringify({ text: text.trim() }),
-      }
-    );
+    const { data, error } = await supabase.functions.invoke("lang-detect", {
+      body: { text: text.trim() },
+    });
 
-    if (response.ok) {
-      return await response.json();
+    if (data && !error && !data.error) {
+      return { language: data.language, confidence: data.confidence || 0.5 };
     }
   } catch (error) {
     console.error("Language detection service error, falling back to regex:", error);
   }
 
-  // Fallback to regex-based detection (176 langs via FastText, or local patterns)
+  // Fallback to regex-based detection
   const patterns: [RegExp, string][] = [
+    [/[\u0B80-\u0BFF]/, "ta"],                                         // Tamil
     [/\b(el|la|los|las|es|está|como|qué|por|para|muy|más)\b/i, "es"],
     [/\b(le|la|les|est|sont|avec|pour|dans|une|comment)\b/i, "fr"],
     [/\b(der|die|das|ist|und|ein|eine|nicht|ich|wie)\b/i, "de"],

@@ -61,11 +61,10 @@ const Navbar = () => {
         initial={{ y: -80, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
         transition={{ duration: 0.6, ease: "easeOut" }}
-        className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ${
-          scrolled
-            ? "glass shadow-elevated"
+        className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ${scrolled
+          ? "glass shadow-elevated"
           : "bg-white/40 border-b border-transparent  "
-        }`}
+          }`}
       >
         <div className="container flex items-center justify-between h-20">
           {/* Logo */}
@@ -100,11 +99,10 @@ const Navbar = () => {
                 }}
                 whileHover={{ scale: 1.08 }}
                 whileTap={{ scale: 0.95 }}
-                className={`relative px-4 py-2 rounded-lg transition-colors duration-300 ${
-                  activeSection === link.href
-                    ? "text-royal"
-                    : "text-muted-foreground hover:text-foreground"
-                }`}
+                className={`relative px-4 py-2 rounded-lg transition-colors duration-300 ${activeSection === link.href
+                  ? "text-royal"
+                  : "text-muted-foreground hover:text-foreground"
+                  }`}
               >
                 {link.label}
                 {activeSection === link.href && (
@@ -116,7 +114,7 @@ const Navbar = () => {
                 )}
               </motion.a>
             ))}
-            <Link to="/admin/dashboard">
+            <Link to="/Login">
               <motion.span
                 whileHover={{ scale: 1.08 }}
                 whileTap={{ scale: 0.95 }}
@@ -198,11 +196,10 @@ const Navbar = () => {
                         handleNavClick(link.href);
                       }
                     }}
-                    className={`block px-4 py-3 rounded-xl text-base font-medium transition-colors ${
-                      activeSection === link.href
-                        ? "bg-royal/10 text-royal"
-                        : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
-                    }`}
+                    className={`block px-4 py-3 rounded-xl text-base font-medium transition-colors ${activeSection === link.href
+                      ? "bg-royal/10 text-royal"
+                      : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
+                      }`}
                   >
                     {link.label}
                   </motion.a>

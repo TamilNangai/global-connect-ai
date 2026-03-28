@@ -39,24 +39,122 @@ function detectLanguageRegex(text: string): { language: string; confidence: numb
   return { language: "en", confidence: 0.5 };
 }
 
-// Call external FastText service (Node.js or Python backend)
-async function detectLanguageFastText(text: string): Promise<{ language: string; confidence: number } | null> {
-  const fastTextServiceUrl = Deno.env.get("FASTTEXT_SERVICE_URL");
-  if (!fastTextServiceUrl) return null;
+const SYSTEM_PROMPT = `You are UniSpeak AI, a highly accurate multilingual language detection engine and API response handler.
+
+Your responsibilities:
+1. Detect the correct language of the input text.
+2. Handle invalid or missing input gracefully.
+3. Handle API-related issues logically (like missing authorization, empty input, etc.).
+4. Always return a valid JSON response.
+
+----------------------------------------
+LANGUAGE DETECTION RULES:
+
+- Detect the actual language (NOT translation).
+- Do NOT default to English unless 100% certain.
+- Detect transliterated text:
+  e.g., "vanakkam", "epdi iruka" → Tamil
+- Recognize:
+  - Tanglish (Tamil in English letters)
+  - Hinglish, Manglish, etc.
+- If multiple languages → return dominant + mark "mixed"
+- If unclear → return "unknown"
+- Recognize common words:
+  - "amigo" → Spanish
+  - "bonjour" → French
+  - "namaste" → Hindi
+- Use phonetic reasoning, not just dictionary matching
+- Confidence must be realistic (0–100)
+- NEVER guess randomly
+
+----------------------------------------
+ERROR HANDLING RULES:
+
+If input is empty:
+{
+  "error": true,
+  "message": "Input text is empty",
+  "status": 400
+}
+
+If authorization is missing (simulated API scenario):
+{
+  "error": true,
+  "message": "Missing authorization header",
+  "status": 401
+}
+
+If input is invalid or too short:
+{
+  "error": false,
+  "language": "unknown",
+  "iso_code": "unknown",
+  "confidence": 0,
+  "type": "unknown",
+  "note": "Input too short or unclear"
+}
+
+----------------------------------------
+OUTPUT FORMAT (STRICT JSON ONLY):
+
+For success:
+{
+  "error": false,
+  "language": "<full language name>",
+  "iso_code": "<ISO code>",
+  "confidence": <0-100>,
+  "type": "<pure | mixed | transliterated | unknown>",
+  "note": "<short explanation>"
+}
+
+----------------------------------------
+IMPORTANT:
+- ALWAYS return JSON
+- NO extra text
+- NO explanations outside JSON`;
+
+// Call OpenAI for advanced language detection
+async function detectLanguageOpenAI(text: string) {
+  const OPENAI_API_KEY = Deno.env.get("OPENAI_API_KEY");
+  if (!OPENAI_API_KEY) return null;
 
   try {
-    const response = await fetch(fastTextServiceUrl, {
+    const response = await fetch("https://api.openai.com/v1/chat/completions", {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ text }),
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${OPENAI_API_KEY}`
+      },
+      body: JSON.stringify({
+        model: "gpt-4o-mini", // fast and cheap for this task
+        messages: [
+          { role: "system", content: SYSTEM_PROMPT },
+          { role: "user", content: `INPUT:\n"${text}"` }
+        ],
+        temperature: 0.1,
+        response_format: { type: "json_object" }
+      }),
     });
 
-    if (!response.ok) return null;
+    if (!response.ok) {
+      console.error("OpenAI API error:", await response.text());
+      return null;
+    }
     
     const result = await response.json();
-    return result; // Expected: { language: "es", confidence: 0.98 }
+    const parsed = JSON.parse(result.choices[0].message.content);
+    
+    // Map ISO code to 'language' to remain compatible with frontend 
+    // and parse confidence as a float
+    return {
+      language: parsed.iso_code?.toLowerCase() || "en",
+      confidence: parseFloat(parsed.confidence) / 100 || 0.5,
+      full_language_name: parsed.language,
+      type: parsed.type,
+      note: parsed.note
+    };
   } catch (error) {
-    console.error("FastText service error:", error);
+    console.error("OpenAI detection error:", error);
     return null;
   }
 }
@@ -77,10 +175,10 @@ serve(async (req: Request) => {
       );
     }
 
-    // Try FastText service first
-    let result = await detectLanguageFastText(text.trim());
+    // Try OpenAI detection first
+    let result: any = await detectLanguageOpenAI(text.trim());
 
-    // Fall back to regex if FastText unavailable
+    // Fall back to regex if OpenAI unavailable
     if (!result) {
       result = detectLanguageRegex(text);
     }

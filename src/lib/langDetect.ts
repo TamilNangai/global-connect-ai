@@ -1,22 +1,21 @@
+import { supabase } from "@/integrations/supabase/client";
+
 export async function detectLanguage(text: string) {
     try {
-        const res = await fetch(
-            `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/lang-detect`,
-            {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                    "apikey": import.meta.env.VITE_SUPABASE_ANON_KEY,
-                    "Authorization": `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
-                },
-                body: JSON.stringify({ text }),
-            }
-        );
+        const { data, error } = await supabase.functions.invoke("lang-detect", {
+            body: { text: text.trim() }
+        });
 
-        const data = await res.json();
-        return data.language || "en";
+        console.log("API RESPONSE:", data); // 🔍 debug
+
+        if (error || !data || data.error) {
+            return "unknown";
+        }
+
+        return data.language || "unknown";
+
     } catch (err) {
         console.error("Language detect error:", err);
-        return "en";
+        return "unknown"; // ❗ not "en"
     }
 }
